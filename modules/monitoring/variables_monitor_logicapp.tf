@@ -12,6 +12,8 @@ variable "logicapp_log_signals" {
       action_group = string
       throttling   = optional(number)
 
+      auto_mitigation_enabled = optional(bool)
+
       trigger = object({
         operator  = string
         threshold = number
@@ -31,11 +33,14 @@ locals {
   logicapp_log_signals_default = [
     {
       name         = "Logic App - Runs Failed - Critical"
-      query        = "let _resources = TagData_CL| where Tags_s contains '\"te-managed-service\": \"workload\"'| summarize arg_max(TimeGenerated, *) by Id_s = tolower(Id_s);let _perf = AzureMetrics | where ResourceProvider == 'MICROSOFT.LOGIC' and MetricName == 'RunsFailed'  ; _perf| join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize AggregatedValue = sum(Total) by bin(TimeGenerated, 5m), Resource"
+      query        = "let _resources = ${local.law_tag_query_monitored}; AzureMetrics | where ResourceProvider == 'MICROSOFT.LOGIC' | where MetricName == 'RunsFailed' | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize AggregatedValue = sum(Total) by bin(TimeGenerated, 5m), Resource, SubscriptionId, CMDBId | project-reorder SubscriptionId, CMDBId"
       severity     = 0
       frequency    = 15
       time_window  = 30
       action_group = "tm-critical-actiongroup"
+
+      auto_mitigation_enabled = true
+
       trigger = {
         operator  = "GreaterThan"
         threshold = 2
@@ -49,11 +54,14 @@ locals {
     },
     {
       name         = "Logic App - Runs Failed - Warning"
-      query        = "let _resources = TagData_CL| where Tags_s contains '\"te-managed-service\": \"workload\"'| summarize arg_max(TimeGenerated, *) by Id_s = tolower(Id_s);let _perf = AzureMetrics | where ResourceProvider == 'MICROSOFT.LOGIC' and MetricName == 'RunsFailed'  ; _perf| join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize AggregatedValue = sum(Total) by bin(TimeGenerated, 5m), Resource"
+      query        = "let _resources = ${local.law_tag_query_monitored}; AzureMetrics | where ResourceProvider == 'MICROSOFT.LOGIC' | where MetricName == 'RunsFailed' | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize AggregatedValue = sum(Total) by bin(TimeGenerated, 5m), Resource, SubscriptionId, CMDBId | project-reorder SubscriptionId, CMDBId"
       severity     = 1
       frequency    = 15
       time_window  = 30
       action_group = "tm-warning-actiongroup"
+
+      auto_mitigation_enabled = true
+
       trigger = {
         operator  = "GreaterThan"
         threshold = 0

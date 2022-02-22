@@ -25,7 +25,7 @@ module "snow_logicapp" {
   ## The `source` parameter must be changed when you are using it in your own code!
   ##
   ## Use:
-  ##   "git::https://github.com/tieto-public-cloud/az-tf-monitoring//modules/snow_logicapp?ref=v2.0"
+  ##   "git::https://github.com/tieto-public-cloud/terraform-tietoevry-azure-monitoring//modules/snow_logicapp?ref=v2.0"
   ## where `v2.0` is a git repository reference to a tagged version of the code (a git tag).
   ##
   ## This will make sure your module is correctly versioned and its code is retrieved from the correct place.
@@ -77,7 +77,7 @@ module "tagging_logicapp" {
   ## The `source` parameter must be changed when you are using it in your own code!
   ##
   ## Use:
-  ##   "git::https://github.com/tieto-public-cloud/az-tf-monitoring//modules/tagging_logicapp?ref=v2.0"
+  ##   "git::https://github.com/tieto-public-cloud/terraform-tietoevry-azure-monitoring//modules/tagging_logicapp?ref=v2.0"
   ## where `v2.0` is a git repository reference to a tagged version of the code (a git tag).
   ##
   ## This will make sure your module is correctly versioned and its code is retrieved from the correct place.
@@ -95,6 +95,7 @@ module "tagging_logicapp" {
   resource_group_name = azurerm_resource_group.la_rg.name
   location            = azurerm_resource_group.la_rg.location
 
+  ## Details for connecting to the shared LAW deployment.
   law_id           = azurerm_log_analytics_workspace.law.id
   law_workspace_id = azurerm_log_analytics_workspace.law.workspace_id
   law_primary_key  = azurerm_log_analytics_workspace.law.primary_shared_key
@@ -136,7 +137,7 @@ module "monitoring" {
   ## The `source` parameter must be changed when you are using it in your own code!
   ##
   ## Use:
-  ##   "git::https://github.com/tieto-public-cloud/az-tf-monitoring//modules/monitoring?ref=v2.0"
+  ##   "git::https://github.com/tieto-public-cloud/terraform-tietoevry-azure-monitoring//modules/monitoring?ref=v2.0"
   ## where `v2.0` is a git repository reference to a tagged version of the code (a git tag).
   ##
   ## This will make sure your module is correctly versioned and its code is retrieved from the correct place.
@@ -157,12 +158,17 @@ module "monitoring" {
   law_resource_group_name = azurerm_resource_group.law_rg.name
 
   ## Change configuration of the default action group set up.
-  ## Module deploys two webhook-based AGs by default:
-  ## * tm-critical-actiongroup
-  ## * tm-warning-actiongroup
+  ## Module deploys two Logic App AGs and one emial AG by default:
+  ## * tm-critical-actiongroup (LApp)
+  ## * tm-warning-actiongroup (LApp)
+  ## * tm-critical-fallback-actiongroup (email)
   ag_default_logicapp_id           = module.snow_logicapp.logic_app_id
   ag_default_logicapp_callback_url = module.snow_logicapp.logic_app_callback_url
+  ag_default_fallback_email        = var.ag_fallback_email
   # ag_default_use_common_alert_schema = true
+
+  ## Make sure this matches the configuration of your tagging_loggicapp!
+  # tagging_logicapp_tag_retrieval_interval = 3 # in hours!
 
   ## To choose what will be monitored. Everything is turned off by default.
   monitor = [
@@ -174,8 +180,8 @@ module "monitoring" {
     # "datafactory",
     # "expressroute",
     # "lb",
-    # "tagging_logicapp", ## To monitor resources deployed by this module.
-    # "snow_logicapp"     ## To monitor resources deployed by this module.
+    "tagging_logicapp", ## To monitor resources deployed by this module.
+    "snow_logicapp"     ## To monitor resources deployed by this module.
   ]
 
   ## Assign common tags to all resources deployed by this module and its submodules.

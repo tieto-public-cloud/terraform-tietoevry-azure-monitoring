@@ -1,26 +1,35 @@
 ##############################################################################
-## Creates common monitoring set up - action groups - and delegates the
-## rest to other modules.
+## Creates common monitoring set up:
+## * action groups for alerting notifications,
+## * log query based alerts,
+## * metric based alerts.
 ##
-## Delegated:
-## * Creation of log query based alerts to alert_query.
-## * Creation of metric based alerts to metric_query.
-## * Creation of a Function App pushing resource tags to LAW to tagging_functionapp.
-##
+## For log query based alerts, it applies default alerting bundles when
+## requested.
 ##############################################################################
 
 locals {
+  # Some constants for our queries.
+  law_tag_table           = "TagDataV2_CL"
+  law_tag_monitored_key   = "te-managed-service"
+  law_tag_monitored_value = "workload"
+  law_tag_routing_key     = "te-cmdb-ci-id"
+
+  # The following query provides: Id_s (string), SubscriptionId (string), Tags (dict), CMDBId (string)
+  law_tag_query_monitored = "${local.law_tag_table} | extend Tag = pack(tagKey_s, tagValue_s) | summarize Tags = make_bag(Tag), arg_max(TimeGenerated, SubscriptionId) by Id_s = tolower(id_s) | where Tags['${local.law_tag_monitored_key}'] == '${local.law_tag_monitored_value}' | extend CMDBId = Tags['${local.law_tag_routing_key}'] | project-away TimeGenerated"
+
   # All available bundles have to be explicitly registered here.
   all_log_signals = {
-    azurevm             = local.azurevm_log_signals
-    azuresql            = local.azuresql_log_signals
-    backup              = local.backup_log_signals
-    agw                 = local.agw_log_signals
-    azurefunction       = local.azurefunction_log_signals
-    datafactory         = local.datafactory_log_signals
-    expressroute        = local.expressroute_log_signals
-    lb                  = local.lb_log_signals
-    tagging_functionapp = local.tagging_functionapp_log_signals
+    azurevm          = local.azurevm_log_signals
+    azuresql         = local.azuresql_log_signals
+    backup           = local.backup_log_signals
+    agw              = local.agw_log_signals
+    azurefunction    = local.azurefunction_log_signals
+    datafactory      = local.datafactory_log_signals
+    expressroute     = local.expressroute_log_signals
+    lb               = local.lb_log_signals
+    tagging_logicapp = local.tagging_logicapp_log_signals
+    snow_logicapp    = local.snow_logicapp_log_signals
   }
 
   # Only selected bundles will be applied. The caller is selecting.
@@ -123,6 +132,8 @@ resource "azurerm_monitor_scheduled_query_rules_alert" "query_alert" {
   enabled     = lookup(each.value, "enabled", null)
   severity    = lookup(each.value, "severity", null)
   throttling  = lookup(each.value, "throttling", null)
+
+  auto_mitigation_enabled = lookup(each.value, "auto_mitigation_enabled", null)
 
   trigger {
     operator  = each.value.trigger.operator

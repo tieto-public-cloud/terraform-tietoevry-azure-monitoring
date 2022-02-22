@@ -12,6 +12,8 @@ variable "datafactory_log_signals" {
       action_group = string
       throttling   = optional(number)
 
+      auto_mitigation_enabled = optional(bool)
+
       trigger = object({
         operator  = string
         threshold = number
@@ -31,11 +33,13 @@ locals {
   datafactory_log_signals_default = [
     {
       name         = "Data Factory - Failed Pipeline Runs - Critical"
-      query        = "let _resources = TagData_CL | where Tags_s contains '\"te-managed-service\": \"workload\"' | summarize arg_max(TimeGenerated, *) by Id_s = tolower(Id_s); let _perf = ADFPipelineRun | where Status in ('Failed') ; _perf | join kind=inner _resources on $left._ResourceId == $right.Id_s"
+      query        = "let _resources = ${local.law_tag_query_monitored}; ADFPipelineRun | where Status == 'Failed' | join kind=inner _resources on $left._ResourceId == $right.Id_s | project-reorder SubscriptionId, CMDBId"
       severity     = 0
       frequency    = 5
       time_window  = 15
       action_group = "tm-critical-actiongroup"
+
+      auto_mitigation_enabled = true
 
       trigger = {
         operator  = "GreaterThan"
@@ -44,11 +48,13 @@ locals {
     },
     {
       name         = "Data Factory - Failed Pipeline Runs - Warning"
-      query        = "let _resources = TagData_CL | where Tags_s contains '\"te-managed-service\": \"workload\"' | summarize arg_max(TimeGenerated, *) by Id_s = tolower(Id_s); let _perf = ADFPipelineRun | where Status in ('Failed') ; _perf | join kind=inner _resources on $left._ResourceId == $right.Id_s"
+      query        = "let _resources = ${local.law_tag_query_monitored}; ADFPipelineRun | where Status == 'Failed' join kind=inner _resources on $left._ResourceId == $right.Id_s | project-reorder SubscriptionId, CMDBId"
       severity     = 1
       frequency    = 5
       time_window  = 15
       action_group = "tm-warning-actiongroup"
+
+      auto_mitigation_enabled = true
 
       trigger = {
         operator  = "GreaterThan"

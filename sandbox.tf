@@ -37,6 +37,21 @@ resource "azurerm_log_analytics_solution" "law_vminsights" {
   provider = azurerm.law
 }
 
+resource "azurerm_log_analytics_solution" "law_logicappsmanagement" {
+  solution_name         = "LogicAppsManagement"
+  location              = azurerm_resource_group.law_rg.location
+  resource_group_name   = azurerm_resource_group.law_rg.name
+  workspace_resource_id = azurerm_log_analytics_workspace.law.id
+  workspace_name        = var.law_name
+
+  plan {
+    publisher = "Microsoft"
+    product   = "OMSGallery/LogicAppsManagement"
+  }
+
+  provider = azurerm.law
+}
+
 ## LA set-up.
 resource "azurerm_resource_group" "la_rg" {
   name     = var.la_resource_group_name

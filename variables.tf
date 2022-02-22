@@ -94,6 +94,16 @@ variable "sb_resource_group_name" {
   }
 }
 
+variable "ag_fallback_email" {
+  description = "Email address to use for the fallback action group, this will be used for monitoring of the monitoring set-up"
+  type        = string
+
+  validation {
+    condition     = length(var.ag_fallback_email) > 0
+    error_message = "Allowed value for ag_fallback_email is a non-empty string."
+  }
+}
+
 variable "location" {
   description = "The Azure location of your subscriptions (region)"
   type        = string

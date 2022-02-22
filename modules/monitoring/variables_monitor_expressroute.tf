@@ -12,6 +12,8 @@ variable "expressroute_log_signals" {
       action_group = string
       throttling   = optional(number)
 
+      auto_mitigation_enabled = optional(bool)
+
       trigger = object({
         operator  = string
         threshold = number
@@ -31,11 +33,14 @@ locals {
   expressroute_log_signals_default = [
     {
       name         = "Express Route - BGP Availability - Critical"
-      query        = "let _resources = TagData_CL| where Tags_s contains '\"te-managed-service\": \"workload\"'| summarize arg_max(TimeGenerated, *) by Id_s = tolower(Id_s);let _perf = AzureMetrics | where MetricName == 'BgpAvailability' ; _perf| join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize by AggregatedValue = Average, bin(TimeGenerated, 5m), Resource"
+      query        = "let _resources = ${local.law_tag_query_monitored}; AzureMetrics | where MetricName == 'BgpAvailability' | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize by AggregatedValue = Average, bin(TimeGenerated, 5m), Resource, SubscriptionId, CMDBId | project-reorder SubscriptionId, CMDBId"
       severity     = 0
       frequency    = 5
       time_window  = 5
       action_group = "tm-critical-actiongroup"
+
+      auto_mitigation_enabled = true
+
       trigger = {
         operator  = "LessThan"
         threshold = 80
@@ -49,11 +54,14 @@ locals {
     },
     {
       name         = "Express Route - ARP Availability - Critical"
-      query        = "let _resources = TagData_CL| where Tags_s contains '\"te-managed-service\": \"workload\"'| summarize arg_max(TimeGenerated, *) by Id_s = tolower(Id_s);let _perf = AzureMetrics | where MetricName == 'ArpAvailability' ; _perf| join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize by AggregatedValue = Average, bin(TimeGenerated, 5m), Resource"
+      query        = "let _resources = ${local.law_tag_query_monitored}; AzureMetrics | where MetricName == 'ArpAvailability' | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize by AggregatedValue = Average, bin(TimeGenerated, 5m), Resource, SubscriptionId, CMDBId | project-reorder SubscriptionId, CMDBId"
       severity     = 0
       frequency    = 5
       time_window  = 5
       action_group = "tm-critical-actiongroup"
+
+      auto_mitigation_enabled = true
+
       trigger = {
         operator  = "LessThan"
         threshold = 80
@@ -67,11 +75,14 @@ locals {
     },
     {
       name         = "Express Route - BGP Availability - Warning"
-      query        = "let _resources = TagData_CL| where Tags_s contains '\"te-managed-service\": \"workload\"'| summarize arg_max(TimeGenerated, *) by Id_s = tolower(Id_s);let _perf = AzureMetrics | where MetricName == 'BgpAvailability' ; _perf| join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize by AggregatedValue = Average, bin(TimeGenerated, 5m), Resource"
+      query        = "let _resources = ${local.law_tag_query_monitored}; AzureMetrics | where MetricName == 'BgpAvailability' | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize by AggregatedValue = Average, bin(TimeGenerated, 5m), Resource, SubscriptionId, CMDBId | project-reorder SubscriptionId, CMDBId"
       severity     = 0
       frequency    = 5
       time_window  = 5
       action_group = "tm-warning-actiongroup"
+
+      auto_mitigation_enabled = true
+
       trigger = {
         operator  = "LessThan"
         threshold = 95
@@ -85,11 +96,14 @@ locals {
     },
     {
       name         = "Express Route - ARP Availability - Warning"
-      query        = "let _resources = TagData_CL| where Tags_s contains '\"te-managed-service\": \"workload\"'| summarize arg_max(TimeGenerated, *) by Id_s = tolower(Id_s);let _perf = AzureMetrics | where MetricName == 'ArpAvailability' ; _perf| join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize by AggregatedValue = Average, bin(TimeGenerated, 5m), Resource"
+      query        = "let _resources = ${local.law_tag_query_monitored}; AzureMetrics | where MetricName == 'ArpAvailability' | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize by AggregatedValue = Average, bin(TimeGenerated, 5m), Resource, SubscriptionId, CMDBId | project-reorder SubscriptionId, CMDBId"
       severity     = 0
       frequency    = 5
       time_window  = 5
       action_group = "tm-warning-actiongroup"
+
+      auto_mitigation_enabled = true
+
       trigger = {
         operator  = "LessThan"
         threshold = 95

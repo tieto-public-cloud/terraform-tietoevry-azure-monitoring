@@ -12,6 +12,8 @@ variable "agw_log_signals" {
       action_group = string
       throttling   = optional(number)
 
+      auto_mitigation_enabled = optional(bool)
+
       trigger = object({
         operator  = string
         threshold = number
@@ -31,11 +33,13 @@ locals {
   agw_log_signals_default = [
     {
       name         = "Application Gateway - Unhealthy Backend Count - Warning"
-      query        = "let _resources = TagData_CL| where Tags_s contains '\"te-managed-service\": \"workload\"'| summarize arg_max(TimeGenerated, *) by Id_s = tolower(Id_s);let _perf = AzureMetrics | where MetricName == 'UnhealthyHostCount'; _perf | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize AggregatedValue = avg(Count) by bin(TimeGenerated, 5m), Resource"
+      query        = "let _resources = ${local.law_tag_query_monitored}; AzureMetrics | where MetricName == 'UnhealthyHostCount' | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize AggregatedValue = avg(Count) by bin(TimeGenerated, 5m), Resource, SubscriptionId, CMDBId | project-reorder SubscriptionId, CMDBId"
       severity     = 1
       frequency    = 30
       time_window  = 60
       action_group = "tm-warning-actiongroup"
+
+      auto_mitigation_enabled = true
 
       trigger = {
         operator  = "GreaterThan"
@@ -51,11 +55,13 @@ locals {
     },
     {
       name         = "Application Gateway - Client Round Trip Latency - Warning"
-      query        = "let _resources = TagData_CL| where Tags_s contains '\"te-managed-service\": \"workload\"'| summarize arg_max(TimeGenerated, *) by Id_s = tolower(Id_s);let _perf = AzureMetrics | where MetricName == 'ClientRtt'; _perf | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize AggregatedValue = avg(Average) by bin(TimeGenerated, 5m), Resource"
+      query        = "let _resources = ${local.law_tag_query_monitored}; AzureMetrics | where MetricName == 'ClientRtt' | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize AggregatedValue = avg(Average) by bin(TimeGenerated, 5m), Resource, SubscriptionId, CMDBId | project-reorder SubscriptionId, CMDBId"
       severity     = 1
       frequency    = 30
       time_window  = 60
       action_group = "tm-warning-actiongroup"
+
+      auto_mitigation_enabled = true
 
       trigger = {
         operator  = "GreaterThan"

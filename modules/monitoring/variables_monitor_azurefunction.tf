@@ -12,6 +12,8 @@ variable "azurefunction_log_signals" {
       action_group = string
       throttling   = optional(number)
 
+      auto_mitigation_enabled = optional(bool)
+
       trigger = object({
         operator  = string
         threshold = number
@@ -31,11 +33,13 @@ locals {
   azurefunction_log_signals_default = [
     {
       name         = "Azure Function - Errors - Critical"
-      query        = "let _resources = TagData_CL| where Tags_s contains '\"te-managed-service\": \"workload\"'| summarize arg_max(TimeGenerated, *) by Id_s = tolower(Id_s);let _perf = AppExceptions ; _perf | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize AggregatedValue = count() by bin(TimeGenerated, 5m), AppRoleName"
+      query        = "let _resources = ${local.law_tag_query_monitored}; AppExceptions | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize AggregatedValue = count() by bin(TimeGenerated, 5m), AppRoleName, SubscriptionId, CMDBId | project-reorder SubscriptionId, CMDBId"
       severity     = 0
       frequency    = 5
       time_window  = 5
       action_group = "tm-critical-actiongroup"
+
+      auto_mitigation_enabled = true
 
       trigger = {
         operator  = "GreaterThan"
@@ -51,11 +55,13 @@ locals {
     },
     {
       name         = "Azure Function - Errors - Warning"
-      query        = "let _resources = TagData_CL| where Tags_s contains '\"te-managed-service\": \"workload\"'| summarize arg_max(TimeGenerated, *) by Id_s = tolower(Id_s);let _perf = AppExceptions ; _perf | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize AggregatedValue = count() by bin(TimeGenerated, 5m), AppRoleName"
+      query        = "let _resources = ${local.law_tag_query_monitored}; AppExceptions | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize AggregatedValue = count() by bin(TimeGenerated, 5m), AppRoleName, SubscriptionId, CMDBId | project-reorder SubscriptionId, CMDBId"
       severity     = 1
       frequency    = 5
       time_window  = 5
       action_group = "tm-warning-actiongroup"
+
+      auto_mitigation_enabled = true
 
       trigger = {
         operator  = "GreaterThan"

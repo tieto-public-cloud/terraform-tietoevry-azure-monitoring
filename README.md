@@ -2,8 +2,9 @@
 
 ## General information
 This repository contains a set of Terraform modules:  
-* `monitoring` - the main module referencing/using all other submodules.
-* `tagging_logicapp` - a module deploying Azure Logic App reading resource tags from subscriptions and submitting them to LAW.
+* `monitoring` - a module deploying an opinionated monitoring/alerting set-up on the provided LAW instance.
+* `tagging_logicapp` - a module deploying an Azure Logic App reading resource tags from subscriptions and submitting them to LAW.
+* `snow_logicapp` - a module deploying an Azure Logic App that converts AzureCommonAlert event to ServiceNow events.
 
 Unless you know exactly what you are doing, you should use these modules as shown in the example provided in the root
 of this repository.
@@ -70,7 +71,7 @@ locals {
 }
 
 module "snow_logicapp" {
-  source    = "git::https://github.com/tieto-public-cloud/az-tf-monitoring//modules/snow_logicapp?ref=v2.0"
+  source    = "git::https://github.com/tieto-public-cloud/terraform-tietoevry-azure-monitoring//modules/snow_logicapp?ref=v2.0"
 
   ## The module expects a specific provider, mapping must be provided explicitly!
   providers = {
@@ -121,7 +122,7 @@ locals {
 }
 
 module "tagging_logicapp" {
-  source    = "git::https://github.com/tieto-public-cloud/az-tf-monitoring//modules/tagging_logicapp?ref=v2.0"
+  source    = "git::https://github.com/tieto-public-cloud/terraform-tietoevry-azure-monitoring//modules/tagging_logicapp?ref=v2.0"
 
   ## The module expects a specific provider, mapping must be provided explicitly!
   providers = {
@@ -133,6 +134,7 @@ module "tagging_logicapp" {
   resource_group_name = azurerm_resource_group.la_rg.name
   location            = azurerm_resource_group.la_rg.location
 
+  ## Details for connecting to the shared LAW deployment.
   law_id           = azurerm_log_analytics_workspace.law.id
   law_workspace_id = azurerm_log_analytics_workspace.law.workspace_id
   law_primary_key  = azurerm_log_analytics_workspace.law.primary_shared_key
@@ -180,7 +182,7 @@ locals {
 }
 
 module "monitoring" {
-  source    = "git::https://github.com/tieto-public-cloud/az-tf-monitoring//modules/monitoring?ref=v2.0"
+  source    = "git::https://github.com/tieto-public-cloud/terraform-tietoevry-azure-monitoring//modules/monitoring?ref=v2.0"
 
   ## The module a specific provider, mapping must be provided explicitly!
   providers = {
@@ -195,12 +197,17 @@ module "monitoring" {
   law_resource_group_name = azurerm_resource_group.law_rg.name
 
   ## Change configuration of the default action group set up.
-  ## Module deploys two webhook-based AGs by default:
-  ## * tm-critical-actiongroup
-  ## * tm-warning-actiongroup
+  ## Module deploys two Logic App AGs and one emial AG by default:
+  ## * tm-critical-actiongroup (LApp)
+  ## * tm-warning-actiongroup (LApp)
+  ## * tm-critical-fallback-actiongroup (email)
   ag_default_logicapp_id           = module.snow_logicapp.logic_app_id
   ag_default_logicapp_callback_url = module.snow_logicapp.logic_app_callback_url
+  ag_default_fallback_email        = var.ag_fallback_email
   # ag_default_use_common_alert_schema = true
+
+  ## Make sure this matches the configuration of your tagging_loggicapp!
+  # tagging_logicapp_tag_retrieval_interval = 3 # in hours!
 
   ## To choose what will be monitored. Everything is turned off by default.
   monitor = [
@@ -270,15 +277,16 @@ You need to add a new module stanza to [modules/monitoring/main.tf](modules/moni
 locals {
   # All available bundles have to be explicitly registered here.
   all_log_signals = {
-    azurevm             = local.azurevm_log_signals
-    azuresql            = local.azuresql_log_signals
-    backup              = local.backup_log_signals
-    agw                 = local.agw_log_signals
-    azurefunction       = local.azurefunction_log_signals
-    datafactory         = local.datafactory_log_signals
-    expressroute        = local.expressroute_log_signals
-    lb                  = local.lb_log_signals
+    azurevm          = local.azurevm_log_signals
+    azuresql         = local.azuresql_log_signals
+    backup           = local.backup_log_signals
+    agw              = local.agw_log_signals
+    azurefunction    = local.azurefunction_log_signals
+    datafactory      = local.datafactory_log_signals
+    expressroute     = local.expressroute_log_signals
+    lb               = local.lb_log_signals
     tagging_logicapp = local.tagging_logicapp_log_signals
+    snow_logicapp    = local.snow_logicapp_log_signals
   }
 
   # ...

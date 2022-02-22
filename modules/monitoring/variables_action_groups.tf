@@ -8,6 +8,16 @@ variable "ag_default_logicapp_id" {
   }
 }
 
+variable "ag_default_fallback_email" {
+  description = "Email address to use for the fallback action group, this will be used for monitoring of the monitoring set-up"
+  type        = string
+
+  validation {
+    condition     = length(var.ag_default_fallback_email) > 0
+    error_message = "Allowed value for ag_default_fallback_email is a non-empty string."
+  }
+}
+
 variable "ag_default_logicapp_callback_url" {
   description = "Callback URL of the Logic App used for event transformation and processing"
   type        = string
@@ -118,6 +128,15 @@ locals {
         name                    = "SNow Logic App"
         resource_id             = var.ag_default_logicapp_id
         callback_url            = var.ag_default_logicapp_callback_url
+        use_common_alert_schema = var.ag_default_use_common_alert_schema
+      }
+    },
+    {
+      name       = "tm-critical-fallback-actiongroup"
+      short_name = "tm-crit-fbag"
+      email = {
+        name                    = "Fallback monitoring contact"
+        email_address           = var.ag_default_fallback_email
         use_common_alert_schema = var.ag_default_use_common_alert_schema
       }
     }
