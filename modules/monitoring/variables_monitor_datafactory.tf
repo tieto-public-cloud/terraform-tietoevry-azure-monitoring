@@ -33,10 +33,10 @@ locals {
   datafactory_log_signals_default = [
     {
       name         = "Data Factory - Failed Pipeline Runs - Critical"
-      query        = "let _resources = ${local.law_tag_query_monitored}; ADFPipelineRun | where Status == 'Failed' | join kind=inner _resources on $left._ResourceId == $right.Id_s | project-reorder SubscriptionId, CMDBId"
+      query        = "let _resources = ${local.law_tag_query_monitored}; ADFPipelineRun | where TimeGenerated > ago(15m) | where Status == 'Failed' | join kind=inner _resources on $left._ResourceId == $right.Id_s | project-reorder SubscriptionId, CMDBId"
       severity     = 0
       frequency    = 5
-      time_window  = 15
+      time_window  = local.law_tag_time_window
       action_group = "tm-critical-actiongroup"
 
       auto_mitigation_enabled = true
@@ -48,10 +48,10 @@ locals {
     },
     {
       name         = "Data Factory - Failed Pipeline Runs - Warning"
-      query        = "let _resources = ${local.law_tag_query_monitored}; ADFPipelineRun | where Status == 'Failed' join kind=inner _resources on $left._ResourceId == $right.Id_s | project-reorder SubscriptionId, CMDBId"
+      query        = "let _resources = ${local.law_tag_query_monitored}; ADFPipelineRun | where TimeGenerated > ago(15m) | where Status == 'Failed' | join kind=inner _resources on $left._ResourceId == $right.Id_s | project-reorder SubscriptionId, CMDBId"
       severity     = 1
       frequency    = 5
-      time_window  = 15
+      time_window  = local.law_tag_time_window
       action_group = "tm-warning-actiongroup"
 
       auto_mitigation_enabled = true
@@ -59,13 +59,6 @@ locals {
       trigger = {
         operator  = "GreaterThan"
         threshold = 0
-
-        metric_trigger = {
-          operator  = "GreaterThan"
-          threshold = 0
-          type      = "Consecutive"
-          column    = "Resource"
-        }
       }
     }
   ]

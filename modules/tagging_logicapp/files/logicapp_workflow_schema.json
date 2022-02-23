@@ -64,7 +64,7 @@
                               "type": "ManagedServiceIdentity"
                           },
                           "body": {
-                              "query": "resources | where isnotempty(tags) | project subscriptionId, id, tags | mvexpand tags | extend tagKey = tostring(bag_keys(tags)[0]) | extend tagValue = tostring(tags[tagKey]) | project subscriptionId, id, tagKey, tagValue",
+                              "query": "resources | where isnotempty(tags) | project subscriptionId, id, tags, type | mvexpand tags | extend tagKey = tostring(bag_keys(tags)[0]) | extend tagValue = tostring(tags[tagKey]) | project subscriptionId, id, tagKey, tagValue, type",
                               "subscriptions": [
                                   "@{items('For_Each_Target_Subscription')}"
                               ]

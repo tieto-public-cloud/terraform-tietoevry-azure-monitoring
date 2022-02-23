@@ -12,52 +12,6 @@
                                         "actions": {
                                             "For_Each_Search_Query": {
                                                 "actions": {
-                                                    "For_Each_Result_Table": {
-                                                        "actions": {
-                                                            "For_Each_Result": {
-                                                                "actions": {
-                                                                    "SNow_Webhook_-_Create_Alert": {
-                                                                        "inputs": {
-                                                                            "authentication": {
-                                                                                "password": "@parameters('ServiceNow Webhook Password')",
-                                                                                "type": "Basic",
-                                                                                "username": "@parameters('ServiceNow Webhook Username')"
-                                                                            },
-                                                                            "body": {
-                                                                                "description": "@{triggerBody()?['data']?['essentials']?['description']}\n\nSearch Query: @{items('For_Each_Search_Query')?['searchQuery']}\n\nResult: @{join(item(), '; ')}",
-                                                                                "event_class": "@{last(split(first(triggerBody()?['data']?['essentials']?['alertTargetIDs']), '/'))} - @{split(first(triggerBody()?['data']?['essentials']?['alertTargetIDs']), '/')[2]}",
-                                                                                "metric_name": "@{triggerBody()?['data']?['essentials']?['alertRule']}",
-                                                                                "node": "@{if(equals(length(item()[parameters('Query Column Mapping')['CMDBId']]), 0), item()[parameters('Query Column Mapping')['SubscriptionId']], item()[parameters('Query Column Mapping')['CMDBId']])}",
-                                                                                "resource": "@{triggerBody()?['data']?['essentials']?['alertRule']}",
-                                                                                "severity": "@{if(equals(triggerBody()?['data']?['essentials']?['monitorCondition'], 'Fired'), parameters('Severity Mapping')[triggerBody()?['data']?['essentials']?['severity']], 0)}",
-                                                                                "source": "Microsoft Azure v2",
-                                                                                "time_of_event": "@{triggerBody()?['data']?['essentials']?['firedDateTime']}",
-                                                                                "type": "@{triggerBody()?['data']?['essentials']?['signalType']}",
-                                                                                "additional_info" : "{ \"u_external_event_id\": \"@{triggerBody()?['data']?['essentials']?['alertId']}\", \"u_external_event_url\": \"@{items('For_Each_Search_Query')?['linkToFilteredSearchResultsUI']}\" }"
-                                                                            },
-                                                                            "headers": {
-                                                                                "Content-Type": "application/json"
-                                                                            },
-                                                                            "method": "POST",
-                                                                            "uri": "@parameters('ServiceNow Webhook URL')"
-                                                                        },
-                                                                        "runAfter": {},
-                                                                        "type": "Http"
-                                                                    }
-                                                                },
-                                                                "foreach": "@items('For_Each_Result_Table')?['rows']",
-                                                                "runAfter": {},
-                                                                "type": "Foreach"
-                                                            }
-                                                        },
-                                                        "foreach": "@body('Parse_Results_from_LAW')?['tables']",
-                                                        "runAfter": {
-                                                            "Parse_Results_from_LAW": [
-                                                                "Succeeded"
-                                                            ]
-                                                        },
-                                                        "type": "Foreach"
-                                                    },
                                                     "Get_Results_from_LAW": {
                                                         "inputs": {
                                                             "authentication": {
@@ -125,6 +79,38 @@
                                                             ]
                                                         },
                                                         "type": "ParseJson"
+                                                    },
+                                                    "SNow_Webhook_-_Create_Alert": {
+                                                        "inputs": {
+                                                            "authentication": {
+                                                                "password": "@parameters('ServiceNow Webhook Password')",
+                                                                "type": "Basic",
+                                                                "username": "@parameters('ServiceNow Webhook Username')"
+                                                            },
+                                                            "body": {
+                                                                "additional_info": "{ \"u_external_event_id\": \"@{triggerBody()?['data']?['essentials']?['alertId']}\", \"u_external_event_url\": \"@{items('For_Each_Search_Query')?['linkToFilteredSearchResultsUI']}\" }",
+                                                                "description": "@{triggerBody()?['data']?['essentials']?['description']}\n\nSearch Query: @{items('For_Each_Search_Query')?['searchQuery']}\n\nResult: @{join(coalesce(first(first(body('Parse_Results_from_LAW')?['tables'])?['rows']), createArray(split(first(triggerBody()?['data']?['essentials']?['alertTargetIDs']), '/')[2], '')), '; ')}",
+                                                                "event_class": "@{last(split(first(triggerBody()?['data']?['essentials']?['alertTargetIDs']), '/'))} - @{split(first(triggerBody()?['data']?['essentials']?['alertTargetIDs']), '/')[2]}",
+                                                                "metric_name": "@{triggerBody()?['data']?['essentials']?['alertRule']}",
+                                                                "node": "@{if(equals(length(coalesce(first(first(body('Parse_Results_from_LAW')?['tables'])?['rows']), createArray(split(first(triggerBody()?['data']?['essentials']?['alertTargetIDs']), '/')[2], ''))[parameters('Query Column Mapping')['CMDBId']]), 0), coalesce(first(first(body('Parse_Results_from_LAW')?['tables'])?['rows']), createArray(split(first(triggerBody()?['data']?['essentials']?['alertTargetIDs']), '/')[2], ''))[parameters('Query Column Mapping')['SubscriptionId']], coalesce(first(first(body('Parse_Results_from_LAW')?['tables'])?['rows']), createArray(split(first(triggerBody()?['data']?['essentials']?['alertTargetIDs']), '/')[2], ''))[parameters('Query Column Mapping')['CMDBId']])}",
+                                                                "resource": "@{triggerBody()?['data']?['essentials']?['alertRule']}",
+                                                                "severity": "@{if(equals(triggerBody()?['data']?['essentials']?['monitorCondition'], 'Fired'), parameters('Severity Mapping')[triggerBody()?['data']?['essentials']?['severity']], 0)}",
+                                                                "source": "Microsoft Azure v2",
+                                                                "time_of_event": "@{triggerBody()?['data']?['essentials']?['firedDateTime']}",
+                                                                "type": "@{triggerBody()?['data']?['essentials']?['signalType']}"
+                                                            },
+                                                            "headers": {
+                                                                "Content-Type": "application/json"
+                                                            },
+                                                            "method": "POST",
+                                                            "uri": "@parameters('ServiceNow Webhook URL')"
+                                                        },
+                                                        "runAfter": {
+                                                            "Parse_Results_from_LAW": [
+                                                                "Succeeded"
+                                                            ]
+                                                        },
+                                                        "type": "Http"
                                                     }
                                                 },
                                                 "foreach": "@body('Parse_Log_Alert_v2_Context')?['condition']?['allOf']",
@@ -241,52 +227,6 @@
                                     },
                                     "Log_Analytics": {
                                         "actions": {
-                                            "For_Each_Result_Table_-_Legacy": {
-                                                "actions": {
-                                                    "For_Each_Result_-_Legacy": {
-                                                        "actions": {
-                                                            "SNow_Webhook_-_Create_Alert_-_Legacy": {
-                                                                "inputs": {
-                                                                    "authentication": {
-                                                                        "password": "@parameters('ServiceNow Webhook Password')",
-                                                                        "type": "Basic",
-                                                                        "username": "@parameters('ServiceNow Webhook Username')"
-                                                                    },
-                                                                    "body": {
-                                                                        "description": "@{triggerBody()?['data']?['essentials']?['description']}\n\nSearch Query: @{body('Parse_Log_Analytics_Context')?['SearchQuery']}\n\nResult: @{join(item(), '; ')}",
-                                                                        "event_class": "@{last(split(first(triggerBody()?['data']?['essentials']?['alertTargetIDs']), '/'))} - @{split(first(triggerBody()?['data']?['essentials']?['alertTargetIDs']), '/')[2]}",
-                                                                        "metric_name": "@{triggerBody()?['data']?['essentials']?['alertRule']}",
-                                                                        "node": "@{if(equals(length(item()[parameters('Query Column Mapping')['CMDBId']]), 0), item()[parameters('Query Column Mapping')['SubscriptionId']], item()[parameters('Query Column Mapping')['CMDBId']])}",
-                                                                        "resource": "@{triggerBody()?['data']?['essentials']?['alertRule']}",
-                                                                        "severity": "@{if(equals(triggerBody()?['data']?['essentials']?['monitorCondition'], 'Fired'), parameters('Severity Mapping')[triggerBody()?['data']?['essentials']?['severity']], 0)}",
-                                                                        "source": "Microsoft Azure v2",
-                                                                        "time_of_event": "@{triggerBody()?['data']?['essentials']?['firedDateTime']}",
-                                                                        "type": "@{triggerBody()?['data']?['essentials']?['signalType']}",
-                                                                        "additional_info" : "{ \"u_external_event_id\": \"@{triggerBody()?['data']?['essentials']?['alertId']}\", \"u_external_event_url\": \"@{body('Parse_Log_Analytics_Context')?['LinkToFilteredSearchResultsUI']}\" }"
-                                                                    },
-                                                                    "headers": {
-                                                                        "Content-Type": "application/json"
-                                                                    },
-                                                                    "method": "POST",
-                                                                    "uri": "@parameters('ServiceNow Webhook URL')"
-                                                                },
-                                                                "runAfter": {},
-                                                                "type": "Http"
-                                                            }
-                                                        },
-                                                        "foreach": "@items('For_Each_Result_Table_-_Legacy')?['rows']",
-                                                        "runAfter": {},
-                                                        "type": "Foreach"
-                                                    }
-                                                },
-                                                "foreach": "@body('Parse_Results_from_LAW_-_Legacy')?['tables']",
-                                                "runAfter": {
-                                                    "Parse_Results_from_LAW_-_Legacy": [
-                                                        "Succeeded"
-                                                    ]
-                                                },
-                                                "type": "Foreach"
-                                            },
                                             "Get_Results_from_LAW_-_Legacy": {
                                                 "inputs": {
                                                     "authentication": {
@@ -384,9 +324,6 @@
                                                                                 },
                                                                                 "rows": {
                                                                                     "items": {
-                                                                                        "items": {
-                                                                                            "type": "string"
-                                                                                        },
                                                                                         "type": "array"
                                                                                     },
                                                                                     "type": "array"
@@ -478,6 +415,38 @@
                                                     ]
                                                 },
                                                 "type": "ParseJson"
+                                            },
+                                            "SNow_Webhook_-_Create_Alert_-_Legacy": {
+                                                "inputs": {
+                                                    "authentication": {
+                                                        "password": "@parameters('ServiceNow Webhook Password')",
+                                                        "type": "Basic",
+                                                        "username": "@parameters('ServiceNow Webhook Username')"
+                                                    },
+                                                    "body": {
+                                                        "additional_info": "{ \"u_external_event_id\": \"@{triggerBody()?['data']?['essentials']?['alertId']}\", \"u_external_event_url\": \"@{body('Parse_Log_Analytics_Context')?['LinkToFilteredSearchResultsUI']}\" }",
+                                                        "description": "@{triggerBody()?['data']?['essentials']?['description']}\n\nSearch Query: @{body('Parse_Log_Analytics_Context')?['SearchQuery']}\n\nResult: @{join(coalesce(first(first(body('Parse_Results_from_LAW_-_Legacy')?['tables'])?['rows']), createArray(split(first(triggerBody()?['data']?['essentials']?['alertTargetIDs']), '/')[2], '')), '; ')}",
+                                                        "event_class": "@{last(split(first(triggerBody()?['data']?['essentials']?['alertTargetIDs']), '/'))} - @{split(first(triggerBody()?['data']?['essentials']?['alertTargetIDs']), '/')[2]}",
+                                                        "metric_name": "@{triggerBody()?['data']?['essentials']?['alertRule']}",
+                                                        "node": "@{if(equals(length(coalesce(first(first(body('Parse_Results_from_LAW_-_Legacy')?['tables'])?['rows']), createArray(split(first(triggerBody()?['data']?['essentials']?['alertTargetIDs']), '/')[2], ''))[parameters('Query Column Mapping')['CMDBId']]), 0), coalesce(first(first(body('Parse_Results_from_LAW_-_Legacy')?['tables'])?['rows']), createArray(split(first(triggerBody()?['data']?['essentials']?['alertTargetIDs']), '/')[2], ''))[parameters('Query Column Mapping')['SubscriptionId']], coalesce(first(first(body('Parse_Results_from_LAW_-_Legacy')?['tables'])?['rows']), createArray(split(first(triggerBody()?['data']?['essentials']?['alertTargetIDs']), '/')[2], ''))[parameters('Query Column Mapping')['CMDBId']])}",
+                                                        "resource": "@{triggerBody()?['data']?['essentials']?['alertRule']}",
+                                                        "severity": "@{if(equals(triggerBody()?['data']?['essentials']?['monitorCondition'], 'Fired'), parameters('Severity Mapping')[triggerBody()?['data']?['essentials']?['severity']], 0)}",
+                                                        "source": "Microsoft Azure v2",
+                                                        "time_of_event": "@{triggerBody()?['data']?['essentials']?['firedDateTime']}",
+                                                        "type": "@{triggerBody()?['data']?['essentials']?['signalType']}"
+                                                    },
+                                                    "headers": {
+                                                        "Content-Type": "application/json"
+                                                    },
+                                                    "method": "POST",
+                                                    "uri": "@parameters('ServiceNow Webhook URL')"
+                                                },
+                                                "runAfter": {
+                                                    "Parse_Results_from_LAW_-_Legacy": [
+                                                        "Succeeded"
+                                                    ]
+                                                },
+                                                "type": "Http"
                                             }
                                         },
                                         "case": "Log Analytics"
@@ -527,7 +496,6 @@
             }
         },
         "contentVersion": "1.0.0.0",
-        "outputs": {},
         "parameters": {
             "Query Column Mapping": {
                 "defaultValue": {

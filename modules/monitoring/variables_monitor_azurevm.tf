@@ -30,18 +30,26 @@ variable "azurevm_log_signals" {
 }
 
 locals {
+  # Some constants to use.
+  law_tag_cpu_baseline_key = "monitoring-cpu"
+  law_tag_mem_baseline_key = "monitoring-mem"
+
   azurevm_log_singals_default = [
     # Default cpu alert baseline
     {
       name         = "Azure VM - CPU Usage - Critical"
-      query        = "let _resources = TagData_CL| where (Tags_s contains '\"te-managed-service\": \"workload\"' or Tags_s contains '\"te-managed-service\": \"true\"') and Tags_s !contains '\"monitoring-cpu\"' | summarize arg_max(TimeGenerated, *) by Id_s = tolower(Id_s);let _perf = Perf| where ObjectName == 'Processor' and CounterName == '% Processor Time'; _perf| join kind=inner _resources on $left._ResourceId == $right.Id_s | extend d=parse_json(Tags_s) | extend CMDBId=d['te-cmdb-ci-id'] | summarize AggregatedValue = avg(CounterValue) by bin(TimeGenerated, 5m), Computer, tostring(CMDBId), _SubscriptionId | project-reorder _SubscriptionId, CMDBId"
+      query        = "let _resources = ${local.law_tag_query_monitored} | where isempty(Tags['${local.law_tag_cpu_baseline_key}']); Perf | where TimeGenerated > ago(15m) | where ObjectName == 'Processor' | where CounterName == '% Processor Time' | where InstanceName == '_Total' | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize AggregatedValue = avg(CounterValue) by bin(TimeGenerated, 5m), Computer, tostring(CMDBId), SubscriptionId | project-reorder SubscriptionId, CMDBId"
       severity     = 0
       frequency    = 5
-      time_window  = 15
+      time_window  = local.law_tag_time_window
       action_group = "tm-critical-actiongroup"
+
+      auto_mitigation_enabled = true
+
       trigger = {
         operator  = "GreaterThan"
         threshold = 95
+
         metric_trigger = {
           operator  = "GreaterThan"
           threshold = 2
@@ -52,14 +60,18 @@ locals {
     },
     {
       name         = "Azure VM - CPU Usage - Warning"
-      query        = "let _resources = TagData_CL| where (Tags_s contains '\"te-managed-service\": \"workload\"' or Tags_s contains '\"te-managed-service\": \"true\"') and Tags_s !contains '\"monitoring-cpu\"'| summarize arg_max(TimeGenerated, *) by Id_s = tolower(Id_s);let _perf = Perf| where ObjectName == 'Processor' and CounterName == '% Processor Time'; _perf| join kind=inner _resources on $left._ResourceId == $right.Id_s | extend d=parse_json(Tags_s) | extend CMDBId=d['te-cmdb-ci-id'] | summarize AggregatedValue = avg(CounterValue) by bin(TimeGenerated, 5m), Computer, tostring(CMDBId), _SubscriptionId | project-reorder _SubscriptionId, CMDBId"
+      query        = "let _resources = ${local.law_tag_query_monitored} | where isempty(Tags['${local.law_tag_cpu_baseline_key}']); Perf | where TimeGenerated > ago(15m) | where ObjectName == 'Processor' | where CounterName == '% Processor Time' | where InstanceName == '_Total' | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize AggregatedValue = avg(CounterValue) by bin(TimeGenerated, 5m), Computer, tostring(CMDBId), SubscriptionId | project-reorder SubscriptionId, CMDBId"
       severity     = 1
       frequency    = 5
-      time_window  = 15
+      time_window  = local.law_tag_time_window
       action_group = "tm-warning-actiongroup"
+
+      auto_mitigation_enabled = true
+
       trigger = {
         operator  = "GreaterThan"
         threshold = 90
+
         metric_trigger = {
           operator  = "GreaterThan"
           threshold = 2
@@ -71,14 +83,18 @@ locals {
     # High CPU alert baseline
     {
       name         = "Azure VM - CPU Usage High - Critical"
-      query        = "let _resources = TagData_CL| where (Tags_s contains '\"te-managed-service\": \"workload\"' or Tags_s contains '\"te-managed-service\": \"true\"') and Tags_s contains '\"monitoring-cpu\": \"high\"' | summarize arg_max(TimeGenerated, *) by Id_s = tolower(Id_s);let _perf = Perf| where ObjectName == 'Processor' and CounterName == '% Processor Time'; _perf| join kind=inner _resources on $left._ResourceId == $right.Id_s | extend d=parse_json(Tags_s) | extend CMDBId=d['te-cmdb-ci-id'] | summarize AggregatedValue = avg(CounterValue) by bin(TimeGenerated, 5m), Computer, tostring(CMDBId), _SubscriptionId | project-reorder _SubscriptionId, CMDBId"
+      query        = "let _resources = ${local.law_tag_query_monitored} | where Tags['${local.law_tag_cpu_baseline_key}'] == 'high'; Perf | where TimeGenerated > ago(15m) | where ObjectName == 'Processor' | where CounterName == '% Processor Time' | where InstanceName == '_Total' | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize AggregatedValue = avg(CounterValue) by bin(TimeGenerated, 5m), Computer, tostring(CMDBId), SubscriptionId | project-reorder SubscriptionId, CMDBId"
       severity     = 0
       frequency    = 5
-      time_window  = 15
+      time_window  = local.law_tag_time_window
       action_group = "tm-critical-actiongroup"
+
+      auto_mitigation_enabled = true
+
       trigger = {
         operator  = "GreaterThan"
         threshold = 98
+
         metric_trigger = {
           operator  = "GreaterThan"
           threshold = 2
@@ -89,14 +105,18 @@ locals {
     },
     {
       name         = "Azure VM - CPU Usage High - Warning"
-      query        = "let _resources = TagData_CL| where (Tags_s contains '\"te-managed-service\": \"workload\"' or Tags_s contains '\"te-managed-service\": \"true\"') and Tags_s contains '\"monitoring-cpu\": \"high\"' | summarize arg_max(TimeGenerated, *) by Id_s = tolower(Id_s);let _perf = Perf| where ObjectName == 'Processor' and CounterName == '% Processor Time'; _perf| join kind=inner _resources on $left._ResourceId == $right.Id_s | extend d=parse_json(Tags_s) | extend CMDBId=d['te-cmdb-ci-id'] | summarize AggregatedValue = avg(CounterValue) by bin(TimeGenerated, 5m), Computer, tostring(CMDBId), _SubscriptionId | project-reorder _SubscriptionId, CMDBId"
+      query        = "let _resources = ${local.law_tag_query_monitored} | where Tags['${local.law_tag_cpu_baseline_key}'] == 'high'; Perf | where TimeGenerated > ago(15m) | where ObjectName == 'Processor' | where CounterName == '% Processor Time' | where InstanceName == '_Total' | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize AggregatedValue = avg(CounterValue) by bin(TimeGenerated, 5m), Computer, tostring(CMDBId), SubscriptionId | project-reorder SubscriptionId, CMDBId"
       severity     = 1
       frequency    = 5
-      time_window  = 15
+      time_window  = local.law_tag_time_window
       action_group = "tm-warning-actiongroup"
+
+      auto_mitigation_enabled = true
+
       trigger = {
         operator  = "GreaterThan"
         threshold = 95
+
         metric_trigger = {
           operator  = "GreaterThan"
           threshold = 2
@@ -108,14 +128,18 @@ locals {
     # Slow CPU alert baseline
     {
       name         = "Azure VM - CPU Usage Slow - Critical"
-      query        = "let _resources = TagData_CL| where (Tags_s contains '\"te-managed-service\": \"workload\"' or Tags_s contains '\"te-managed-service\": \"true\"') and Tags_s contains '\"monitoring-cpu\": \"slow\"' | summarize arg_max(TimeGenerated, *) by Id_s = tolower(Id_s);let _perf = Perf| where ObjectName == 'Processor' and CounterName == '% Processor Time'; _perf| join kind=inner _resources on $left._ResourceId == $right.Id_s | extend d=parse_json(Tags_s) | extend CMDBId=d['te-cmdb-ci-id'] | summarize AggregatedValue = avg(CounterValue) by bin(TimeGenerated, 5m), Computer, tostring(CMDBId), _SubscriptionId | project-reorder _SubscriptionId, CMDBId"
+      query        = "let _resources = ${local.law_tag_query_monitored} | where Tags['${local.law_tag_cpu_baseline_key}'] == 'slow'; Perf | where TimeGenerated > ago(15m) | where ObjectName == 'Processor' | where CounterName == '% Processor Time' | where InstanceName == '_Total' | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize AggregatedValue = avg(CounterValue) by bin(TimeGenerated, 5m), Computer, tostring(CMDBId), SubscriptionId | project-reorder SubscriptionId, CMDBId"
       severity     = 0
       frequency    = 5
-      time_window  = 15
+      time_window  = local.law_tag_time_window
       action_group = "tm-critical-actiongroup"
+
+      auto_mitigation_enabled = true
+
       trigger = {
         operator  = "GreaterThan"
         threshold = 90
+
         metric_trigger = {
           operator  = "GreaterThan"
           threshold = 6
@@ -126,14 +150,18 @@ locals {
     },
     {
       name         = "Azure VM - CPU Usage Slow - Warning"
-      query        = "let _resources = TagData_CL| where (Tags_s contains '\"te-managed-service\": \"workload\"' or Tags_s contains '\"te-managed-service\": \"true\"') and Tags_s contains '\"monitoring-cpu\": \"slow\"'| summarize arg_max(TimeGenerated, *) by Id_s = tolower(Id_s);let _perf = Perf| where ObjectName == 'Processor' and CounterName == '% Processor Time'; _perf| join kind=inner _resources on $left._ResourceId == $right.Id_s | extend d=parse_json(Tags_s) | extend CMDBId=d['te-cmdb-ci-id'] | summarize AggregatedValue = avg(CounterValue) by bin(TimeGenerated, 5m), Computer, tostring(CMDBId), _SubscriptionId | project-reorder _SubscriptionId, CMDBId"
+      query        = "let _resources = ${local.law_tag_query_monitored} | where Tags['${local.law_tag_cpu_baseline_key}'] == 'slow'; Perf | where TimeGenerated > ago(15m) | where ObjectName == 'Processor' | where CounterName == '% Processor Time' | where InstanceName == '_Total' | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize AggregatedValue = avg(CounterValue) by bin(TimeGenerated, 5m), Computer, tostring(CMDBId), SubscriptionId | project-reorder SubscriptionId, CMDBId"
       severity     = 1
       frequency    = 5
-      time_window  = 15
+      time_window  = local.law_tag_time_window
       action_group = "tm-warning-actiongroup"
+
+      auto_mitigation_enabled = true
+
       trigger = {
         operator  = "GreaterThan"
         threshold = 80
+
         metric_trigger = {
           operator  = "GreaterThan"
           threshold = 6
@@ -145,14 +173,18 @@ locals {
     # Default Memory alert baseline
     {
       name         = "Azure VM - Memory Usage - Critical"
-      query        = "let _resources = TagData_CL| where (Tags_s contains '\"te-managed-service\": \"workload\"' or Tags_s contains '\"te-managed-service\": \"true\"') and Tags_s !contains '\"monitoring-mem\"'| summarize arg_max(TimeGenerated, *) by Id_s = tolower(Id_s); let _perf = InsightsMetrics| where Namespace == 'Memory' and Name == 'AvailableMB' | extend tags = todynamic(Tags) | project TimeGenerated, _ResourceId, Computer, P = round(100 - ((Val / parse_json(tags['vm.azm.ms/memorySizeMB'])) * 100)), _SubscriptionId ; _perf| join kind=inner _resources on $left._ResourceId == $right.Id_s  | extend d=parse_json(Tags_s) | extend CMDBId=d['te-cmdb-ci-id'] | summarize AggregatedValue = avg(P) by bin(TimeGenerated, 5m), Computer, tostring(CMDBId),  SubscriptionId = _SubscriptionId  | project-reorder SubscriptionId, CMDBId"
+      query        = "let _resources = ${local.law_tag_query_monitored} | where isempty(Tags['${local.law_tag_mem_baseline_key}']); Perf | where TimeGenerated > ago(15m) | where ObjectName == 'Memory' | where CounterName in ('% Committed Bytes In Use', '% Used Memory') | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize AggregatedValue = avg(CounterValue) by bin(TimeGenerated, 5m), Computer, tostring(CMDBId), SubscriptionId | project-reorder SubscriptionId, CMDBId"
       severity     = 0
       frequency    = 5
-      time_window  = 15
+      time_window  = local.law_tag_time_window
       action_group = "tm-critical-actiongroup"
+
+      auto_mitigation_enabled = true
+
       trigger = {
         operator  = "GreaterThan"
         threshold = 95
+
         metric_trigger = {
           operator  = "GreaterThan"
           threshold = 1
@@ -163,14 +195,18 @@ locals {
     },
     {
       name         = "Azure VM - Memory Usage - Warning"
-      query        = "let _resources = TagData_CL| where (Tags_s contains '\"te-managed-service\": \"workload\"' or Tags_s contains '\"te-managed-service\": \"true\"') and Tags_s !contains '\"monitoring-mem\"'| summarize arg_max(TimeGenerated, *) by Id_s = tolower(Id_s); let _perf = InsightsMetrics| where Namespace == 'Memory' and Name == 'AvailableMB' | extend tags = todynamic(Tags) | project TimeGenerated, _ResourceId, Computer, P = round(100 - ((Val / parse_json(tags['vm.azm.ms/memorySizeMB'])) * 100)), _SubscriptionId  ; _perf| join kind=inner _resources on $left._ResourceId == $right.Id_s  | extend d=parse_json(Tags_s) | extend CMDBId=d['te-cmdb-ci-id'] | summarize AggregatedValue = avg(P) by bin(TimeGenerated, 5m), Computer, tostring(CMDBId),  SubscriptionId = _SubscriptionId  | project-reorder SubscriptionId, CMDBId"
+      query        = "let _resources = ${local.law_tag_query_monitored} | where isempty(Tags['${local.law_tag_mem_baseline_key}']); Perf | where TimeGenerated > ago(15m) | where ObjectName == 'Memory' | where CounterName in ('% Committed Bytes In Use', '% Used Memory') | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize AggregatedValue = avg(CounterValue) by bin(TimeGenerated, 5m), Computer, tostring(CMDBId), SubscriptionId | project-reorder SubscriptionId, CMDBId"
       severity     = 1
       frequency    = 5
-      time_window  = 15
+      time_window  = local.law_tag_time_window
       action_group = "tm-warning-actiongroup"
+
+      auto_mitigation_enabled = true
+
       trigger = {
         operator  = "GreaterThan"
         threshold = 87
+
         metric_trigger = {
           operator  = "GreaterThan"
           threshold = 1
@@ -182,14 +218,18 @@ locals {
     # High Memory alert baseline
     {
       name         = "Azure VM - Memory Usage High - Critical"
-      query        = "let _resources = TagData_CL| where (Tags_s contains '\"te-managed-service\": \"workload\"' or Tags_s contains '\"te-managed-service\": \"true\"') and Tags_s contains '\"monitoring-mem\": \"high\"'| summarize arg_max(TimeGenerated, *) by Id_s = tolower(Id_s); let _perf = InsightsMetrics| where Namespace == 'Memory' and Name == 'AvailableMB' | extend tags = todynamic(Tags) | project TimeGenerated, _ResourceId, Computer, P = round(100 - ((Val / parse_json(tags['vm.azm.ms/memorySizeMB'])) * 100)), _SubscriptionId ; _perf| join kind=inner _resources on $left._ResourceId == $right.Id_s  | extend d=parse_json(Tags_s) | extend CMDBId=d['te-cmdb-ci-id'] | summarize AggregatedValue = avg(P) by bin(TimeGenerated, 5m), Computer, tostring(CMDBId),  SubscriptionId = _SubscriptionId  | project-reorder SubscriptionId, CMDBId"
+      query        = "let _resources = ${local.law_tag_query_monitored} | where Tags['${local.law_tag_mem_baseline_key}'] == 'high'; Perf | where TimeGenerated > ago(15m) | where ObjectName == 'Memory' | where CounterName in ('% Committed Bytes In Use', '% Used Memory') | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize AggregatedValue = avg(CounterValue) by bin(TimeGenerated, 5m), Computer, tostring(CMDBId), SubscriptionId | project-reorder SubscriptionId, CMDBId"
       severity     = 0
       frequency    = 5
-      time_window  = 15
+      time_window  = local.law_tag_time_window
       action_group = "tm-critical-actiongroup"
+
+      auto_mitigation_enabled = true
+
       trigger = {
         operator  = "GreaterThan"
         threshold = 98
+
         metric_trigger = {
           operator  = "GreaterThan"
           threshold = 1
@@ -200,14 +240,18 @@ locals {
     },
     {
       name         = "Azure VM - Memory Usage High - Warning"
-      query        = "let _resources = TagData_CL| where (Tags_s contains '\"te-managed-service\": \"workload\"' or Tags_s contains '\"te-managed-service\": \"true\"') and Tags_s contains '\"monitoring-mem\": \"high\"'| summarize arg_max(TimeGenerated, *) by Id_s = tolower(Id_s); let _perf = InsightsMetrics| where Namespace == 'Memory' and Name == 'AvailableMB' | extend tags = todynamic(Tags) | project TimeGenerated, _ResourceId, Computer, P = round(100 - ((Val / parse_json(tags['vm.azm.ms/memorySizeMB'])) * 100)), _SubscriptionId  ; _perf| join kind=inner _resources on $left._ResourceId == $right.Id_s  | extend d=parse_json(Tags_s) | extend CMDBId=d['te-cmdb-ci-id'] | summarize AggregatedValue = avg(P) by bin(TimeGenerated, 5m), Computer, tostring(CMDBId),  SubscriptionId = _SubscriptionId  | project-reorder SubscriptionId, CMDBId"
+      query        = "let _resources = ${local.law_tag_query_monitored} | where Tags['${local.law_tag_mem_baseline_key}'] == 'high'; Perf | where TimeGenerated > ago(15m) | where ObjectName == 'Memory' | where CounterName in ('% Committed Bytes In Use', '% Used Memory') | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize AggregatedValue = avg(CounterValue) by bin(TimeGenerated, 5m), Computer, tostring(CMDBId), SubscriptionId | project-reorder SubscriptionId, CMDBId"
       severity     = 1
       frequency    = 5
-      time_window  = 15
+      time_window  = local.law_tag_time_window
       action_group = "tm-warning-actiongroup"
+
+      auto_mitigation_enabled = true
+
       trigger = {
         operator  = "GreaterThan"
         threshold = 96
+
         metric_trigger = {
           operator  = "GreaterThan"
           threshold = 1
@@ -219,14 +263,18 @@ locals {
     # Slow Memory alert baseline
     {
       name         = "Azure VM - Memory Usage Slow - Critical"
-      query        = "let _resources = TagData_CL| where (Tags_s contains '\"te-managed-service\": \"workload\"' or Tags_s contains '\"te-managed-service\": \"true\"') and Tags_s contains '\"monitoring-mem\": \"slow\"'| summarize arg_max(TimeGenerated, *) by Id_s = tolower(Id_s); let _perf = InsightsMetrics| where Namespace == 'Memory' and Name == 'AvailableMB' | extend tags = todynamic(Tags) | project TimeGenerated, _ResourceId, Computer, P = round(100 - ((Val / parse_json(tags['vm.azm.ms/memorySizeMB'])) * 100)), _SubscriptionId ; _perf| join kind=inner _resources on $left._ResourceId == $right.Id_s  | extend d=parse_json(Tags_s) | extend CMDBId=d['te-cmdb-ci-id'] | summarize AggregatedValue = avg(P) by bin(TimeGenerated, 5m), Computer, tostring(CMDBId),  SubscriptionId = _SubscriptionId  | project-reorder SubscriptionId, CMDBId"
+      query        = "let _resources = ${local.law_tag_query_monitored} | where Tags['${local.law_tag_mem_baseline_key}'] == 'slow'; Perf | where TimeGenerated > ago(15m) | where ObjectName == 'Memory' | where CounterName in ('% Committed Bytes In Use', '% Used Memory') | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize AggregatedValue = avg(CounterValue) by bin(TimeGenerated, 5m), Computer, tostring(CMDBId), SubscriptionId | project-reorder SubscriptionId, CMDBId"
       severity     = 0
       frequency    = 5
-      time_window  = 15
+      time_window  = local.law_tag_time_window
       action_group = "tm-critical-actiongroup"
+
+      auto_mitigation_enabled = true
+
       trigger = {
         operator  = "GreaterThan"
         threshold = 95
+
         metric_trigger = {
           operator  = "GreaterThan"
           threshold = 6
@@ -237,14 +285,18 @@ locals {
     },
     {
       name         = "Azure VM - Memory Usage Slow - Warning"
-      query        = "let _resources = TagData_CL| where (Tags_s contains '\"te-managed-service\": \"workload\"' or Tags_s contains '\"te-managed-service\": \"true\"') and Tags_s contains '\"monitoring-mem\": \"slow\"'| summarize arg_max(TimeGenerated, *) by Id_s = tolower(Id_s); let _perf = InsightsMetrics| where Namespace == 'Memory' and Name == 'AvailableMB' | extend tags = todynamic(Tags) | project TimeGenerated, _ResourceId, Computer, P = round(100 - ((Val / parse_json(tags['vm.azm.ms/memorySizeMB'])) * 100)), _SubscriptionId  ; _perf| join kind=inner _resources on $left._ResourceId == $right.Id_s  | extend d=parse_json(Tags_s) | extend CMDBId=d['te-cmdb-ci-id'] | summarize AggregatedValue = avg(P) by bin(TimeGenerated, 5m), Computer, tostring(CMDBId),  SubscriptionId = _SubscriptionId  | project-reorder SubscriptionId, CMDBId"
+      query        = "let _resources = ${local.law_tag_query_monitored} | where Tags['${local.law_tag_mem_baseline_key}'] == 'slow'; Perf | where TimeGenerated > ago(15m) | where ObjectName == 'Memory' | where CounterName in ('% Committed Bytes In Use', '% Used Memory') | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize AggregatedValue = avg(CounterValue) by bin(TimeGenerated, 5m), Computer, tostring(CMDBId), SubscriptionId | project-reorder SubscriptionId, CMDBId"
       severity     = 1
       frequency    = 5
-      time_window  = 15
+      time_window  = local.law_tag_time_window
       action_group = "tm-warning-actiongroup"
+
+      auto_mitigation_enabled = true
+
       trigger = {
         operator  = "GreaterThan"
         threshold = 87
+
         metric_trigger = {
           operator  = "GreaterThan"
           threshold = 6
@@ -589,11 +641,14 @@ locals {
     # Default Heartbeat alert baseline
     {
       name         = "Azure VM - Agent Unreachable - Critical"
-      query        = "let _resources = TagData_CL| where (Tags_s contains '\"te-managed-service\": \"workload\"' or Tags_s contains '\"te-managed-service\": \"true\"') | summarize arg_max(TimeGenerated, *) by Id_s = tolower(Id_s);let _perf = Heartbeat  ; _perf| join kind=inner _resources on $left._ResourceId == $right.Id_s | extend d=parse_json(Tags_s) | extend CMDBId=d['te-cmdb-ci-id'] | summarize LastCall = max(TimeGenerated) by Computer, tostring(CMDBId), SubscriptionId = _SubscriptionId | where LastCall < ago(20m) | project-reorder SubscriptionId, CMDBId"
+      query        = "let _resources = ${local.law_tag_query_monitored} | where type_s == 'microsoft.compute/virtualmachines'; Heartbeat | where TimeGenerated > ago(20m) | join kind=rightouter _resources on $left._ResourceId == $right.Id_s | where isempty(Computer) | project SubscriptionId, tostring(CMDBId) | project-reorder SubscriptionId, CMDBId"
       severity     = 0
       frequency    = 5
-      time_window  = 60
+      time_window  = local.law_tag_time_window
       action_group = "tm-critical-actiongroup"
+
+      auto_mitigation_enabled = true
+
       trigger = {
         operator  = "GreaterThan"
         threshold = 0
@@ -601,11 +656,14 @@ locals {
     },
     {
       name         = "Azure VM - Agent Unreachable - Warning"
-      query        = "let _resources = TagData_CL| where (Tags_s contains '\"te-managed-service\": \"workload\"' or Tags_s contains '\"te-managed-service\": \"true\"') | summarize arg_max(TimeGenerated, *) by Id_s = tolower(Id_s);let _perf = Heartbeat  ; _perf| join kind=inner _resources on $left._ResourceId == $right.Id_s | extend d=parse_json(Tags_s) | extend CMDBId=d['te-cmdb-ci-id'] | summarize LastCall = max(TimeGenerated) by Computer, tostring(CMDBId), SubscriptionId = _SubscriptionId | where LastCall < ago(10m) | project-reorder SubscriptionId, CMDBId"
+      query        = "let _resources = ${local.law_tag_query_monitored} | where type_s == 'microsoft.compute/virtualmachines'; Heartbeat | where TimeGenerated > ago(10m) | join kind=rightouter _resources on $left._ResourceId == $right.Id_s | where isempty(Computer) | project SubscriptionId, tostring(CMDBId) | project-reorder SubscriptionId, CMDBId"
       severity     = 1
       frequency    = 5
-      time_window  = 60
+      time_window  = local.law_tag_time_window
       action_group = "tm-warning-actiongroup"
+
+      auto_mitigation_enabled = true
+
       trigger = {
         operator  = "GreaterThan"
         threshold = 0

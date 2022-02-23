@@ -15,8 +15,16 @@ locals {
   law_tag_monitored_value = "workload"
   law_tag_routing_key     = "te-cmdb-ci-id"
 
+  # This is very important! Each query using data from `law_tag_table` needs to have
+  # a time window at least this big and scope down after the join is performed.
+  # Otherwise, it would not get the correct list of tagged resources from `law_tag_table`.
+  #
+  # It means that ALL your queries should contain a `| where TimeGenerated > ago(XXX)` type
+  # of clause in their second part. This will define the actual time window for data processing.
+  law_tag_time_window = (var.tagging_logicapp_tag_retrieval_interval + 1) * 60
+
   # The following query provides: Id_s (string), SubscriptionId (string), Tags (dict), CMDBId (string)
-  law_tag_query_monitored = "${local.law_tag_table} | extend Tag = pack(tagKey_s, tagValue_s) | summarize Tags = make_bag(Tag), arg_max(TimeGenerated, SubscriptionId) by Id_s = tolower(id_s) | where Tags['${local.law_tag_monitored_key}'] == '${local.law_tag_monitored_value}' | extend CMDBId = Tags['${local.law_tag_routing_key}'] | project-away TimeGenerated"
+  law_tag_query_monitored = "${local.law_tag_table} | extend Tag = pack(tagKey_s, tagValue_s) | summarize Tags = make_bag(Tag), arg_max(TimeGenerated, SubscriptionId, type_s) by Id_s = tolower(id_s) | where Tags['${local.law_tag_monitored_key}'] == '${local.law_tag_monitored_value}' | extend CMDBId = Tags['${local.law_tag_routing_key}'] | project-away TimeGenerated"
 
   # All available bundles have to be explicitly registered here.
   all_log_signals = {
@@ -35,6 +43,9 @@ locals {
   # Only selected bundles will be applied. The caller is selecting.
   deploy_log_signals = flatten([for ksig, vsig in local.all_log_signals : vsig if contains(var.monitor, ksig) ])
 }
+
+# Get information about the active subscription.
+data "azurerm_subscription" "current" {}
 
 # Get information about our target LAW.
 data "azurerm_log_analytics_workspace" "law" {

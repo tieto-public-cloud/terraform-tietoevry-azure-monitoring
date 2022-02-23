@@ -134,6 +134,10 @@ resource "azurerm_network_interface" "sb_linux_intf" {
 
   tags     = local.common_tags
   provider = azurerm.aux
+
+  depends_on = [
+    azurerm_subnet_network_security_group_association.sb_nsg_linux
+  ]
 }
 
 resource "azurerm_network_interface" "sb_win_intf" {
@@ -149,6 +153,10 @@ resource "azurerm_network_interface" "sb_win_intf" {
 
   tags     = local.common_tags
   provider = azurerm.aux
+
+  depends_on = [
+    azurerm_subnet_network_security_group_association.sb_nsg_win
+  ]
 }
 
 resource "azurerm_linux_virtual_machine" "sb_linux" {

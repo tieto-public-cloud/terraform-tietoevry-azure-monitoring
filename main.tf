@@ -64,6 +64,12 @@ module "snow_logicapp" {
 
   ## Assign common tags to all resources deployed by this module and its submodules.
   common_tags = local.common_tags
+
+  ## Explicit dependency.
+  depends_on = [
+    azurerm_resource_group.la_rg,
+    azurerm_log_analytics_workspace.law
+  ]
 }
 
 ##############################################################################
@@ -125,6 +131,12 @@ module "tagging_logicapp" {
   ## Doing this often can get expensive. Do not change this value unless you
   ## know what you are doing.
   # tag_retrieval_interval = 3 # in hours!
+
+  ## Explicit dependency.
+  depends_on = [
+    azurerm_resource_group.la_rg,
+    azurerm_log_analytics_workspace.law
+  ]
 }
 
 ##############################################################################

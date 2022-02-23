@@ -33,10 +33,10 @@ locals {
   lb_log_signals_default = [
     {
       name         = "Load Balancer (Standard SKU) - Health Percentage - Critical"
-      query        = "let _resources = ${local.law_tag_query_monitored}; AzureMetrics | where MetricName == 'VipAvailability' | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize by AggregatedValue = Average, bin(TimeGenerated, 5m), Resource, SubscriptionId, CMDBId | project-reorder SubscriptionId, CMDBId"
+      query        = "let _resources = ${local.law_tag_query_monitored}; AzureMetrics | where TimeGenerated > ago(5m) | where MetricName == 'VipAvailability' | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize by AggregatedValue = Average, bin(TimeGenerated, 5m), Resource, SubscriptionId, tostring(CMDBId) | project-reorder SubscriptionId, CMDBId"
       severity     = 0
       frequency    = 5
-      time_window  = 5
+      time_window  = local.law_tag_time_window
       action_group = "tm-critical-actiongroup"
 
       auto_mitigation_enabled = true
@@ -44,6 +44,7 @@ locals {
       trigger = {
         operator  = "LessThan"
         threshold = 90
+
         metric_trigger = {
           operator  = "GreaterThan"
           threshold = 0
@@ -54,10 +55,10 @@ locals {
     },
     {
       name         = "Load Balancer (Standard SKU) - Health Percentage - Warning"
-      query        = "let _resources = ${local.law_tag_query_monitored}; AzureMetrics | where MetricName == 'VipAvailability' | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize by AggregatedValue = Average, bin(TimeGenerated, 5m), Resource, SubscriptionId, CMDBId | project-reorder SubscriptionId, CMDBId"
+      query        = "let _resources = ${local.law_tag_query_monitored}; AzureMetrics | where TimeGenerated > ago(5m) | where MetricName == 'VipAvailability' | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize by AggregatedValue = Average, bin(TimeGenerated, 5m), Resource, SubscriptionId, tostring(CMDBId) | project-reorder SubscriptionId, CMDBId"
       severity     = 1
       frequency    = 5
-      time_window  = 5
+      time_window  = local.law_tag_time_window
       action_group = "tm-warning-actiongroup"
 
       auto_mitigation_enabled = true
@@ -65,6 +66,7 @@ locals {
       trigger = {
         operator  = "LessThan"
         threshold = 100
+
         metric_trigger = {
           operator  = "GreaterThan"
           threshold = 0

@@ -33,10 +33,10 @@ locals {
   agw_log_signals_default = [
     {
       name         = "Application Gateway - Unhealthy Backend Count - Warning"
-      query        = "let _resources = ${local.law_tag_query_monitored}; AzureMetrics | where MetricName == 'UnhealthyHostCount' | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize AggregatedValue = avg(Count) by bin(TimeGenerated, 5m), Resource, SubscriptionId, CMDBId | project-reorder SubscriptionId, CMDBId"
+      query        = "let _resources = ${local.law_tag_query_monitored}; AzureMetrics | where TimeGenerated > ago(1h) | where MetricName == 'UnhealthyHostCount' | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize AggregatedValue = avg(Count) by bin(TimeGenerated, 5m), Resource, SubscriptionId, tostring(CMDBId) | project-reorder SubscriptionId, CMDBId"
       severity     = 1
       frequency    = 30
-      time_window  = 60
+      time_window  = local.law_tag_time_window
       action_group = "tm-warning-actiongroup"
 
       auto_mitigation_enabled = true
@@ -55,10 +55,10 @@ locals {
     },
     {
       name         = "Application Gateway - Client Round Trip Latency - Warning"
-      query        = "let _resources = ${local.law_tag_query_monitored}; AzureMetrics | where MetricName == 'ClientRtt' | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize AggregatedValue = avg(Average) by bin(TimeGenerated, 5m), Resource, SubscriptionId, CMDBId | project-reorder SubscriptionId, CMDBId"
+      query        = "let _resources = ${local.law_tag_query_monitored}; AzureMetrics | where TimeGenerated > ago(1h) | where MetricName == 'ClientRtt' | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize AggregatedValue = avg(Average) by bin(TimeGenerated, 5m), Resource, SubscriptionId, tostring(CMDBId) | project-reorder SubscriptionId, CMDBId"
       severity     = 1
       frequency    = 30
-      time_window  = 60
+      time_window  = local.law_tag_time_window
       action_group = "tm-warning-actiongroup"
 
       auto_mitigation_enabled = true

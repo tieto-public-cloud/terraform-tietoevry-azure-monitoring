@@ -33,7 +33,7 @@ locals {
   snow_logicapp_log_signals_default = [
     {
       name         = "SNow Logic App - Critical"
-      query        = "AzureDiagnostics | where Category == \"WorkflowRuntime\" | where ResourceType == \"WORKFLOWS/RUNS\" | where status_s == \"Failed\" | where workflowId_s == \"${var.ag_default_logicapp_id}\" | project SubscriptionId, resource_location_s, resource_resourceGroupName_s, resource_workflowName_s, startTime_t, status_s"
+      query        = "AzureDiagnostics | where Category == 'WorkflowRuntime' | where ResourceType == 'WORKFLOWS/RUNS' | where status_s == 'Failed' | where workflowId_s == '${var.ag_default_logicapp_id}' | extend CMDBId = '' | project SubscriptionId, CMDBId, resource_location_s, resource_resourceGroupName_s, resource_workflowName_s, startTime_t, status_s"
       severity     = 0
       frequency    = 5
       time_window  = 10
@@ -42,8 +42,8 @@ locals {
       auto_mitigation_enabled = true
 
       trigger = {
-        operator  = "GreaterThanOrEqual"
-        threshold = 1
+        operator  = "GreaterThan"
+        threshold = 0
       }
     }
   ]

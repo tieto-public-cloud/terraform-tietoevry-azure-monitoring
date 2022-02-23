@@ -1,3 +1,14 @@
+variable "tagging_logicapp_tag_retrieval_interval" {
+  description = "How often are tag values refreshed from subscription(s), in hours"
+  type        = number
+  default     = 3
+
+  validation {
+    condition     = var.tagging_logicapp_tag_retrieval_interval >= 1 && var.tagging_logicapp_tag_retrieval_interval <= 24
+    error_message = "Allowed value for tagging_logicapp_tag_retrieval_interval is a number between 1 and 24."
+  }
+}
+
 variable "law_resource_group_name" {
   type        = string
   description = "The Log Analytics Workspace resource group name"

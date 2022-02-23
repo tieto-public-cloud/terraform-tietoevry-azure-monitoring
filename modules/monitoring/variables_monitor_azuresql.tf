@@ -33,10 +33,10 @@ locals {
   azuresql_log_signals_default = [
     {
       name         = "Azure SQL - DTU Usage - Critical"
-      query        = "let _resources = ${local.law_tag_query_monitored}; AzureMetrics | where MetricName == 'dtu_consumption_percent' | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize AggregatedValue = avg(Average) by bin(TimeGenerated, 5m), Resource, SubscriptionId, CMDBId | project-reorder SubscriptionId, CMDBId"
+      query        = "let _resources = ${local.law_tag_query_monitored}; AzureMetrics | where TimeGenerated > ago(15m) | where MetricName == 'dtu_consumption_percent' | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize AggregatedValue = avg(Average) by bin(TimeGenerated, 5m), Resource, SubscriptionId, tostring(CMDBId) | project-reorder SubscriptionId, CMDBId"
       severity     = 0
       frequency    = 5
-      time_window  = 15
+      time_window  = local.law_tag_time_window
       action_group = "tm-critical-actiongroup"
 
       auto_mitigation_enabled = true
@@ -55,10 +55,10 @@ locals {
     },
     {
       name         = "Azure SQL - DTU Usage - Warning"
-      query        = "let _resources = ${local.law_tag_query_monitored}; AzureMetrics | where MetricName == 'dtu_consumption_percent' | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize AggregatedValue = avg(Average) by bin(TimeGenerated, 5m), Resource, SubscriptionId, CMDBId | project-reorder SubscriptionId, CMDBId"
+      query        = "let _resources = ${local.law_tag_query_monitored}; AzureMetrics | where TimeGenerated > ago(15m) | where MetricName == 'dtu_consumption_percent' | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize AggregatedValue = avg(Average) by bin(TimeGenerated, 5m), Resource, SubscriptionId, tostring(CMDBId) | project-reorder SubscriptionId, CMDBId"
       severity     = 1
       frequency    = 5
-      time_window  = 15
+      time_window  = local.law_tag_time_window
       action_group = "tm-warning-actiongroup"
 
       auto_mitigation_enabled = true
@@ -77,10 +77,10 @@ locals {
     },
     {
       name         = "Azure SQL - CPU Usage - Critical"
-      query        = "let _resources = ${local.law_tag_query_monitored}; AzureMetrics | where MetricName == 'cpu_percent' | where ResourceProvider == 'MICROSOFT.SQL' | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize AggregatedValue = avg(Average) by bin(TimeGenerated, 5m), Resource, SubscriptionId, CMDBId | project-reorder SubscriptionId, CMDBId"
+      query        = "let _resources = ${local.law_tag_query_monitored}; AzureMetrics | where TimeGenerated > ago(15m) | where MetricName == 'cpu_percent' | where ResourceProvider == 'MICROSOFT.SQL' | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize AggregatedValue = avg(Average) by bin(TimeGenerated, 5m), Resource, SubscriptionId, tostring(CMDBId) | project-reorder SubscriptionId, CMDBId"
       severity     = 0
       frequency    = 5
-      time_window  = 15
+      time_window  = local.law_tag_time_window
       action_group = "tm-critical-actiongroup"
 
       auto_mitigation_enabled = true
@@ -99,10 +99,10 @@ locals {
     },
     {
       name         = "Azure SQL - CPU Usage - Warning"
-      query        = "let _resources = ${local.law_tag_query_monitored}; AzureMetrics | where MetricName == 'cpu_percent' | where ResourceProvider == 'MICROSOFT.SQL' | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize AggregatedValue = avg(Average) by bin(TimeGenerated, 5m), Resource, SubscriptionId, CMDBId | project-reorder SubscriptionId, CMDBId"
+      query        = "let _resources = ${local.law_tag_query_monitored}; AzureMetrics | where TimeGenerated > ago(15m) | where MetricName == 'cpu_percent' | where ResourceProvider == 'MICROSOFT.SQL' | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize AggregatedValue = avg(Average) by bin(TimeGenerated, 5m), Resource, SubscriptionId, tostring(CMDBId) | project-reorder SubscriptionId, CMDBId"
       severity     = 1
       frequency    = 5
-      time_window  = 15
+      time_window  = local.law_tag_time_window
       action_group = "tm-warning-actiongroup"
 
       auto_mitigation_enabled = true
@@ -121,10 +121,10 @@ locals {
     },
     {
       name         = "Azure SQL - Data Space Used - Critical"
-      query        = "let _resources = ${local.law_tag_query_monitored}; AzureMetrics | where MetricName == 'storage_percent' | where ResourceProvider == 'MICROSOFT.SQL' | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize AggregatedValue = avg(Average) by bin(TimeGenerated, 30m), Resource, SubscriptionId, CMDBId | project-reorder SubscriptionId, CMDBId"
+      query        = "let _resources = ${local.law_tag_query_monitored}; AzureMetrics | where TimeGenerated > ago(30m) | where MetricName == 'storage_percent' | where ResourceProvider == 'MICROSOFT.SQL' | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize AggregatedValue = avg(Average) by bin(TimeGenerated, 30m), Resource, SubscriptionId, tostring(CMDBId) | project-reorder SubscriptionId, CMDBId"
       severity     = 0
       frequency    = 30
-      time_window  = 30
+      time_window  = local.law_tag_time_window
       action_group = "tm-critical-actiongroup"
 
       auto_mitigation_enabled = true
@@ -143,10 +143,10 @@ locals {
     },
     {
       name         = "Azure SQL - Data Space Used - Warning"
-      query        = "let _resources = ${local.law_tag_query_monitored}; AzureMetrics | where MetricName == 'storage_percent' | where ResourceProvider == 'MICROSOFT.SQL' | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize AggregatedValue = avg(Average) by bin(TimeGenerated, 30m), Resource, SubscriptionId, CMDBId | project-reorder SubscriptionId, CMDBId"
+      query        = "let _resources = ${local.law_tag_query_monitored}; AzureMetrics | where TimeGenerated > ago(30m) | where MetricName == 'storage_percent' | where ResourceProvider == 'MICROSOFT.SQL' | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize AggregatedValue = avg(Average) by bin(TimeGenerated, 30m), Resource, SubscriptionId, tostring(CMDBId) | project-reorder SubscriptionId, CMDBId"
       severity     = 1
       frequency    = 30
-      time_window  = 30
+      time_window  = local.law_tag_time_window
       action_group = "tm-warning-actiongroup"
 
       auto_mitigation_enabled = true
@@ -165,10 +165,10 @@ locals {
     },
     {
       name         = "Azure SQL - Data IO Percentage - Critical"
-      query        = "let _resources = ${local.law_tag_query_monitored}; AzureMetrics | where MetricName == 'physical_data_read_percent' | where ResourceProvider == 'MICROSOFT.SQL' | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize AggregatedValue = avg(Average) by bin(TimeGenerated, 5m), Resource, SubscriptionId, CMDBId | project-reorder SubscriptionId, CMDBId"
+      query        = "let _resources = ${local.law_tag_query_monitored}; AzureMetrics | where TimeGenerated > ago(15m) | where MetricName == 'physical_data_read_percent' | where ResourceProvider == 'MICROSOFT.SQL' | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize AggregatedValue = avg(Average) by bin(TimeGenerated, 5m), Resource, SubscriptionId, tostring(CMDBId) | project-reorder SubscriptionId, CMDBId"
       severity     = 0
       frequency    = 5
-      time_window  = 15
+      time_window  = local.law_tag_time_window
       action_group = "tm-critical-actiongroup"
 
       auto_mitigation_enabled = true
@@ -187,10 +187,10 @@ locals {
     },
     {
       name         = "Azure SQL - Data IO Percentage - Warning"
-      query        = "let _resources = ${local.law_tag_query_monitored}; AzureMetrics | where MetricName == 'physical_data_read_percent' | where ResourceProvider == 'MICROSOFT.SQL' | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize AggregatedValue = avg(Average) by bin(TimeGenerated, 5m), Resource, SubscriptionId, CMDBId | project-reorder SubscriptionId, CMDBId"
+      query        = "let _resources = ${local.law_tag_query_monitored}; AzureMetrics | where TimeGenerated > ago(15m) | where MetricName == 'physical_data_read_percent' | where ResourceProvider == 'MICROSOFT.SQL' | join kind=inner _resources on $left._ResourceId == $right.Id_s | summarize AggregatedValue = avg(Average) by bin(TimeGenerated, 5m), Resource, SubscriptionId, tostring(CMDBId) | project-reorder SubscriptionId, CMDBId"
       severity     = 1
       frequency    = 5
-      time_window  = 15
+      time_window  = local.law_tag_time_window
       action_group = "tm-warning-actiongroup"
 
       auto_mitigation_enabled = true
