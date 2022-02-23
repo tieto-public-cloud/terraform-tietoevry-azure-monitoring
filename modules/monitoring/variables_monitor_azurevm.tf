@@ -641,7 +641,7 @@ locals {
     # Default Heartbeat alert baseline
     {
       name         = "Azure VM - Agent Unreachable - Critical"
-      query        = "let _resources = ${local.law_tag_query_monitored} | where type_s == 'microsoft.compute/virtualmachines'; Heartbeat | where TimeGenerated > ago(20m) | join kind=rightouter _resources on $left._ResourceId == $right.Id_s | where isempty(Computer) | project SubscriptionId, tostring(CMDBId) | project-reorder SubscriptionId, CMDBId"
+      query        = "let _resources = ${local.law_tag_query_monitored} | where type_s == 'microsoft.compute/virtualmachines'; Heartbeat | where TimeGenerated > ago(20m) | join kind=rightouter _resources on $left._ResourceId == $right.Id_s | where isempty(Computer) | project SubscriptionId = SubscriptionId1, tostring(CMDBId) | project-reorder SubscriptionId, CMDBId"
       severity     = 0
       frequency    = 5
       time_window  = local.law_tag_time_window
@@ -656,7 +656,7 @@ locals {
     },
     {
       name         = "Azure VM - Agent Unreachable - Warning"
-      query        = "let _resources = ${local.law_tag_query_monitored} | where type_s == 'microsoft.compute/virtualmachines'; Heartbeat | where TimeGenerated > ago(10m) | join kind=rightouter _resources on $left._ResourceId == $right.Id_s | where isempty(Computer) | project SubscriptionId, tostring(CMDBId) | project-reorder SubscriptionId, CMDBId"
+      query        = "let _resources = ${local.law_tag_query_monitored} | where type_s == 'microsoft.compute/virtualmachines'; Heartbeat | where TimeGenerated > ago(10m) | join kind=rightouter _resources on $left._ResourceId == $right.Id_s | where isempty(Computer) | project SubscriptionId = SubscriptionId1, tostring(CMDBId) | project-reorder SubscriptionId, CMDBId"
       severity     = 1
       frequency    = 5
       time_window  = local.law_tag_time_window
