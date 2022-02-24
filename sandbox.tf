@@ -22,6 +22,26 @@ resource "azurerm_log_analytics_workspace" "law" {
   provider = azurerm.law
 }
 
+resource "azurerm_storage_account" "law_storage" {
+  name                     = replace("${var.law_name}sa","/[^a-z0-9]/","")
+  resource_group_name      = azurerm_resource_group.law_rg.name
+  location                 = azurerm_resource_group.law_rg.location
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
+
+  tags     = var.common_tags
+  provider = azurerm.law
+}
+
+resource "azurerm_log_analytics_linked_storage_account" "law_storage_alerts" {
+  data_source_type      = "alerts"
+  resource_group_name   = azurerm_resource_group.law_rg.name
+  workspace_resource_id = azurerm_log_analytics_workspace.law.id
+  storage_account_ids   = [azurerm_storage_account.law_storage.id]
+
+  provider = azurerm.law
+}
+
 resource "azurerm_log_analytics_solution" "law_vminsights" {
   solution_name         = "VMInsights"
   location              = azurerm_resource_group.law_rg.location
