@@ -95,7 +95,7 @@
                                                                 "node": "@{if(equals(length(coalesce(first(first(body('Parse_Results_from_LAW')?['tables'])?['rows']), createArray(split(first(triggerBody()?['data']?['essentials']?['alertTargetIDs']), '/')[2], ''))[parameters('Query Column Mapping')['CMDBId']]), 0), coalesce(first(first(body('Parse_Results_from_LAW')?['tables'])?['rows']), createArray(split(first(triggerBody()?['data']?['essentials']?['alertTargetIDs']), '/')[2], ''))[parameters('Query Column Mapping')['SubscriptionId']], coalesce(first(first(body('Parse_Results_from_LAW')?['tables'])?['rows']), createArray(split(first(triggerBody()?['data']?['essentials']?['alertTargetIDs']), '/')[2], ''))[parameters('Query Column Mapping')['CMDBId']])}",
                                                                 "resource": "@{triggerBody()?['data']?['essentials']?['alertRule']}",
                                                                 "severity": "@{if(equals(triggerBody()?['data']?['essentials']?['monitorCondition'], 'Fired'), parameters('Severity Mapping')[triggerBody()?['data']?['essentials']?['severity']], 0)}",
-                                                                "source": "Microsoft Azure v2",
+                                                                "source": "Microsoft Azure SNow Logic App v2",
                                                                 "time_of_event": "@{triggerBody()?['data']?['essentials']?['firedDateTime']}",
                                                                 "type": "@{triggerBody()?['data']?['essentials']?['signalType']}"
                                                             },
@@ -431,7 +431,7 @@
                                                         "node": "@{if(equals(length(coalesce(first(first(body('Parse_Results_from_LAW_-_Legacy')?['tables'])?['rows']), createArray(split(first(triggerBody()?['data']?['essentials']?['alertTargetIDs']), '/')[2], ''))[parameters('Query Column Mapping')['CMDBId']]), 0), coalesce(first(first(body('Parse_Results_from_LAW_-_Legacy')?['tables'])?['rows']), createArray(split(first(triggerBody()?['data']?['essentials']?['alertTargetIDs']), '/')[2], ''))[parameters('Query Column Mapping')['SubscriptionId']], coalesce(first(first(body('Parse_Results_from_LAW_-_Legacy')?['tables'])?['rows']), createArray(split(first(triggerBody()?['data']?['essentials']?['alertTargetIDs']), '/')[2], ''))[parameters('Query Column Mapping')['CMDBId']])}",
                                                         "resource": "@{triggerBody()?['data']?['essentials']?['alertRule']}",
                                                         "severity": "@{if(equals(triggerBody()?['data']?['essentials']?['monitorCondition'], 'Fired'), parameters('Severity Mapping')[triggerBody()?['data']?['essentials']?['severity']], 0)}",
-                                                        "source": "Microsoft Azure v2",
+                                                        "source": "Microsoft Azure SNow Logic App v2",
                                                         "time_of_event": "@{triggerBody()?['data']?['essentials']?['firedDateTime']}",
                                                         "type": "@{triggerBody()?['data']?['essentials']?['signalType']}"
                                                     },
