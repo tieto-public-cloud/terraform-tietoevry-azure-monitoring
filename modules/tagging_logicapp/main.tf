@@ -70,6 +70,10 @@ resource "azurerm_logic_app_trigger_recurrence" "tagging_logic_app_trigger" {
   logic_app_id = azurerm_logic_app_workflow.tagging_logic_app.id
   frequency    = "Hour"
   interval     = var.tag_retrieval_interval
+
+  depends_on = [
+    azurerm_logic_app_action_custom.tagging_logic_app_kickoff_action
+  ]
 }
 
 resource "azurerm_logic_app_action_custom" "tagging_logic_app_kickoff_action" {

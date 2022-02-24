@@ -49,6 +49,10 @@ resource "azurerm_logic_app_trigger_http_request" "snow_logic_app_http_trigger" 
 
   method = "POST"
   schema = jsonencode(jsondecode(data.local_file.snow_logic_app_schema.content).definition.triggers.manual)
+
+  depends_on = [
+    azurerm_logic_app_action_custom.snow_logic_app_kickoff_action
+  ]
 }
 
 resource "azurerm_logic_app_action_custom" "snow_logic_app_kickoff_action" {
