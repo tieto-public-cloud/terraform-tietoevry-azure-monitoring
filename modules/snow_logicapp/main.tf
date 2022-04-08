@@ -51,7 +51,9 @@ resource "azurerm_logic_app_trigger_http_request" "snow_logic_app_http_trigger" 
   schema = jsonencode(jsondecode(data.local_file.snow_logic_app_schema.content).definition.triggers.manual)
 
   depends_on = [
-    azurerm_logic_app_action_custom.snow_logic_app_kickoff_action
+    azurerm_logic_app_action_custom.snow_logic_app_kickoff_action,
+    azurerm_role_assignment.snow_logic_app_role_reader_law,
+    azurerm_monitor_diagnostic_setting.snow_logic_app_diag
   ]
 }
 

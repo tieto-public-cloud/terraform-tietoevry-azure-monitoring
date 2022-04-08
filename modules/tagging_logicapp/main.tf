@@ -72,7 +72,9 @@ resource "azurerm_logic_app_trigger_recurrence" "tagging_logic_app_trigger" {
   interval     = var.tag_retrieval_interval
 
   depends_on = [
-    azurerm_logic_app_action_custom.tagging_logic_app_kickoff_action
+    azurerm_logic_app_action_custom.tagging_logic_app_kickoff_action,
+    azurerm_role_assignment.tagging_logic_app_role_reader_sub,
+    azurerm_monitor_diagnostic_setting.tagging_logic_app_diag
   ]
 }
 
